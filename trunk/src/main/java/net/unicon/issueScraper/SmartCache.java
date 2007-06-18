@@ -169,13 +169,6 @@ protected int iExpirationTimeout = 3600000;                   // default to 1 ho
     }
   }
   
-  
-  public static class Blah<T> {
-      
-      public class SubBlah extends T {
-          
-      }
-  }
 }
 
 
