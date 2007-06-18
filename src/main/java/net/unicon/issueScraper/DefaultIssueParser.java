@@ -121,7 +121,9 @@ public class DefaultIssueParser implements IIssueParser {
 			                    Method getter = issue.getClass().getDeclaredMethod("set"+name.substring(0, 1).toUpperCase()+name.substring(1), params);
 			                    getter.invoke(issue, args);
 			                } catch (NoSuchMethodException e) {
-			                    throw new RuntimeException("Issue getter not defined: " + name, e);
+			                    if (log.isWarnEnabled()) {
+			                        log.warn("Issue property doesn not exist '" + name + "'. Check the issueXPathMap mappings.");
+			                    }
 			                }
                             
                             if (statusName.equals(name)) {
