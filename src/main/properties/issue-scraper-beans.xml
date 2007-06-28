@@ -95,6 +95,10 @@
 				<entry key="uPortal"><ref bean="uPortalIssuesScraper"/></entry>
 				<entry key="Sakai"><ref bean="sakaiIssuesScraper"/></entry>
 				<entry key="OpenToro"><ref bean="toroChannelsIssuesScraper"/></entry>
+				<entry key="USC Announcements"><ref bean="uscAnnouncementsIssuesScraper"/></entry>
+				<entry key="UBC Webmail"><ref bean="ubcWebmailIssuesScraper"/></entry>
+				<entry key="Bookmarks Channel"><ref bean="bookmarksChannelIssuesScraper"/></entry>
+				<entry key="Bookmarks Portlet"><ref bean="bookmarksPortletIssuesScraper"/></entry>
 			</map>
 		</property>
 	</bean>
@@ -137,6 +141,117 @@
         </property>
     </bean>
     
+    <bean id="uscAnnouncementsIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          singleton="true">
+        <property name="project"><value>USC Announcements</value></property>
+        <property name="issueUrlExpression"><value>http://www.ja-sig.org/issues/browse/.*</value></property>
+        <property name="issueIdExpression"><value>.*(CAN-[0-9]+)</value></property>
+    	<property name="issueIdToken"><value>%ISSUE_ID%</value></property>
+    	<property name="issueLookupUrl"><value>http://www.ja-sig.org/issues/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
+    	<property name="startWorker"><value>false</value></property>
+        <property name="refreshPeriod"><value>300</value></property>
+        <property name="namedQueries">
+        	<map>
+        	</map>
+        </property>
+        <property name="issueParser"><ref bean="jiraIssueParser"/></property>
+        <property name="queryParser"><ref bean="jiraIssueParser"/></property>
+        <property name="issueCache">
+        	<bean class="net.unicon.issueScraper.SmartCache">
+        		<constructor-arg><value>300</value></constructor-arg>
+        	</bean>
+        </property>
+        <property name="queryCache">
+        	<bean class="net.unicon.issueScraper.SmartCache">
+        		<constructor-arg><value>300</value></constructor-arg>
+        	</bean>
+        </property>
+    </bean>
+    
+    <bean id="ubcWebmailIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          singleton="true">
+        <property name="project"><value>UBC Webmail</value></property>
+        <property name="issueUrlExpression"><value>http://www.ja-sig.org/issues/browse/.*</value></property>
+        <property name="issueIdExpression"><value>.*(UBCWEBMAIL-[0-9]+)</value></property>
+    	<property name="issueIdToken"><value>%ISSUE_ID%</value></property>
+    	<property name="issueLookupUrl"><value>http://www.ja-sig.org/issues/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
+    	<property name="startWorker"><value>false</value></property>
+        <property name="refreshPeriod"><value>300</value></property>
+        <property name="namedQueries">
+        	<map>
+        	</map>
+        </property>
+        <property name="issueParser"><ref bean="jiraIssueParser"/></property>
+        <property name="queryParser"><ref bean="jiraIssueParser"/></property>
+        <property name="issueCache">
+        	<bean class="net.unicon.issueScraper.SmartCache">
+        		<constructor-arg><value>300</value></constructor-arg>
+        	</bean>
+        </property>
+        <property name="queryCache">
+        	<bean class="net.unicon.issueScraper.SmartCache">
+        		<constructor-arg><value>300</value></constructor-arg>
+        	</bean>
+        </property>
+    </bean>
+    
+    <bean id="bookmarksChannelIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          singleton="true">
+        <property name="project"><value>Bookmarks Channel</value></property>
+        <property name="issueUrlExpression"><value>http://www.ja-sig.org/issues/browse/.*</value></property>
+        <property name="issueIdExpression"><value>.*(BOOKMARKS-[0-9]+)</value></property>
+    	<property name="issueIdToken"><value>%ISSUE_ID%</value></property>
+    	<property name="issueLookupUrl"><value>http://www.ja-sig.org/issues/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
+    	<property name="startWorker"><value>false</value></property>
+        <property name="refreshPeriod"><value>300</value></property>
+        <property name="namedQueries">
+        	<map>
+        	</map>
+        </property>
+        <property name="issueParser"><ref bean="jiraIssueParser"/></property>
+        <property name="queryParser"><ref bean="jiraIssueParser"/></property>
+        <property name="issueCache">
+        	<bean class="net.unicon.issueScraper.SmartCache">
+        		<constructor-arg><value>300</value></constructor-arg>
+        	</bean>
+        </property>
+        <property name="queryCache">
+        	<bean class="net.unicon.issueScraper.SmartCache">
+        		<constructor-arg><value>300</value></constructor-arg>
+        	</bean>
+        </property>
+    </bean>
+    
+    <bean id="bookmarksPortletIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          singleton="true">
+        <property name="project"><value>Bookmarks Portlet</value></property>
+        <property name="issueUrlExpression"><value>http://www.ja-sig.org/issues/browse/.*</value></property>
+        <property name="issueIdExpression"><value>.*(PBOOK-[0-9]+)</value></property>
+    	<property name="issueIdToken"><value>%ISSUE_ID%</value></property>
+    	<property name="issueLookupUrl"><value>http://www.ja-sig.org/issues/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
+    	<property name="startWorker"><value>false</value></property>
+        <property name="refreshPeriod"><value>300</value></property>
+        <property name="namedQueries">
+        	<map>
+        	</map>
+        </property>
+        <property name="issueParser"><ref bean="jiraIssueParser"/></property>
+        <property name="queryParser"><ref bean="jiraIssueParser"/></property>
+        <property name="issueCache">
+        	<bean class="net.unicon.issueScraper.SmartCache">
+        		<constructor-arg><value>300</value></constructor-arg>
+        	</bean>
+        </property>
+        <property name="queryCache">
+        	<bean class="net.unicon.issueScraper.SmartCache">
+        		<constructor-arg><value>300</value></constructor-arg>
+        	</bean>
+        </property>
+    </bean>
     <bean id="sakaiIssuesScraper"
           class="net.unicon.issueScraper.DefaultProjectIssueScraper"
           singleton="true">
@@ -178,7 +293,7 @@
     <bean id="toroChannelsIssuesScraper"
           class="net.unicon.issueScraper.DefaultProjectIssueScraper"
           singleton="true">
-        <property name="project"><value>Open Toro</value></property>
+        <property name="project"><value>OpenToro</value></property>
         <property name="issueUrlExpression"><value>http://www.ja-sig.org/issues/browse/.*</value></property>
         <property name="issueIdExpression"><value>.*(TORO-[0-9]+)</value></property>
     	<property name="issueIdToken"><value>%ISSUE_ID%</value></property>
