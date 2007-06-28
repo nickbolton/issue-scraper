@@ -4,6 +4,8 @@ public interface IIssue {
     
     public String getId();
     public void setId(String s);
+    public String getProject();
+    public void setProject(String s);
     public String getSummary();
     public void setSummary(String s);
     public String getIssueUrl();
