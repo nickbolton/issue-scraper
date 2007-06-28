@@ -4,6 +4,7 @@ package net.unicon.issueScraper;
 public class Issue implements IIssue {
     
     private String id;
+    private String project;
     private String assignee;
     private String description;
     private String environment;
@@ -127,5 +128,13 @@ public class Issue implements IIssue {
 
     public void setClosed(boolean b) {
         this.closed = b;
+    }
+
+    public String getProject() {
+        return project;
+    }
+
+    public void setProject(String project) {
+        this.project = project;
     }
 }

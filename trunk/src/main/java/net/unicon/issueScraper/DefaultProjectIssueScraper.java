@@ -167,6 +167,11 @@ public class DefaultProjectIssueScraper implements IProjectIssueScraper, Initial
     protected List<IIssue> fetchIssues(String url) {
         List<IIssue> issues = new ArrayList<IIssue>();
         fetchIssues(url, issues);
+        
+        // set the project name for all the issues
+        for (IIssue issue : issues) {
+            issue.setProject(project);
+        }
         return issues;
     }
     
