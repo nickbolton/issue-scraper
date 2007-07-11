@@ -94,6 +94,9 @@ public class IssueTrackerManager implements IIssueTrackerManager {
             answer = scraper.isUrlFromThisProject(url);
         }
             
+        if (log.isDebugEnabled()) {
+            log.debug("Checking if '"+url+"' belongs to project '" + project + "': " + answer);
+        }
         return answer;
     }
 
