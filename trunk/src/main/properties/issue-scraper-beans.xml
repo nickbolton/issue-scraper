@@ -256,7 +256,7 @@
           class="net.unicon.issueScraper.DefaultProjectIssueScraper"
           singleton="true">
         <property name="project"><value>Sakai</value></property>
-        <property name="issueUrlExpression"><value>http://bugs.sakaiproject.org/jira/browse/.*</value></property>
+        <property name="issueUrlExpression"><value>http://jira.sakaiproject.org/jira/browse/.*</value></property>
         <property name="issueIdExpression"><value>.*(SAK-[0-9]+)</value></property>
     	<property name="issueIdToken"><value>%ISSUE_ID%</value></property>
     	<property name="issueLookupUrl"><value>http://bugs.sakaiproject.org/jira/browse/%ISSUE_ID%?decorator=none&amp;view=rss</value></property>
