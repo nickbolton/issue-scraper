@@ -128,7 +128,12 @@ public class DefaultProjectIssueScraper implements IProjectIssueScraper, Initial
     public boolean isUrlFromThisProject(String url) {
         Matcher m1 = issueUrlPattern.matcher(url);
         Matcher m2 = issueIdPattern.matcher(url);
-        return m1.find() && m2.find();
+        boolean b1 = m1.find();
+        boolean b2 = m2.find();
+        if (log.isDebugEnabled()) {
+            log.debug("Checking if '" + url + "' belongs to this project(" + project + "), issueUrlPattern("+issueUrlPattern.pattern()+"), issueIdPattern(" + issueIdPattern.pattern()+"): " + b1 + ", " + b2);
+        }
+        return b1 && b2;
     }
     
     public List<IIssue> fetchNamedQuery(String queryName) {
