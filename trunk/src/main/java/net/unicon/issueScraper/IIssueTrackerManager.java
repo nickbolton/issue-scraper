@@ -4,6 +4,7 @@ import java.util.List;
 
 public interface IIssueTrackerManager {
     
+    public boolean doesUrlBelongToProject(String project, String url);
     public IIssue getIssue(String url);
     public IIssue getIssue(String url, boolean forceQuery);
     public IIssue getIssue(String project, String issueId);

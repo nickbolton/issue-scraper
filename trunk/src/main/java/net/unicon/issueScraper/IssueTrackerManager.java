@@ -87,4 +87,14 @@ public class IssueTrackerManager implements IIssueTrackerManager {
         return issues;
     }
 
+    public boolean doesUrlBelongToProject(String project, String url) {
+        boolean answer = false;
+        IProjectIssueScraper scraper = scraperMap.get(project);
+        if (scraper != null) {
+            answer = scraper.isUrlFromThisProject(url);
+        }
+            
+        return answer;
+    }
+
 }
