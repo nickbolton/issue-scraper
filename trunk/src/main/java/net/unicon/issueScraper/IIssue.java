@@ -1,7 +1,7 @@
 package net.unicon.issueScraper;
 
 public interface IIssue {
-    
+
     public String getId();
     public void setId(String s);
     public String getProject();
@@ -28,4 +28,6 @@ public interface IIssue {
     public void setReporter(String s);
     public void setClosed(boolean b);
     public boolean isClosed();
+    public String getIssueScaperUrl(boolean flag);
+    public void setIssueScraperUrls(String s, String s1);
 }
