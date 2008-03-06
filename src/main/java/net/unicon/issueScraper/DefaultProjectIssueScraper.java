@@ -26,42 +26,45 @@ import org.dom4j.io.XMLWriter;
 import org.springframework.beans.factory.InitializingBean;
 
 public class DefaultProjectIssueScraper implements IProjectIssueScraper, InitializingBean  {
-    
+
     private static final String emptyString = "";
-    
+
     private String project;
     private Map<String, IIssue> issueCache;
     private Map<String, List<IIssue>> queryCache;
     private Map<String, URL> namedQueries;
-    
+
     private boolean startWorker;
     private int refreshPeriod;
-    
+
     private String issueIdToken;
     private String issueLookupUrl;
-    
+
     private Pattern issueUrlPattern;
     private String issueUrlExpression;
-    
+
     private Pattern issueIdPattern;
     private String issueIdExpression;
-    
+
     private List<IStreamInterceptor> streamInterceptors;
     private List<IStringInterceptor> stringInterceptors;
     private List<IDomInterceptor> domInterceptors;
-    
+
     private IIssueParser issueParser;
     private IIssueParser queryParser;
-    
+
     private Log log = LogFactory.getLog(getClass());
-    
+
     private Thread workerThread;
     private IssueRefresherWorker worker;
-    
+
+    private String proxyToken;
+    private String proxy;
+
     public DefaultProjectIssueScraper() {
         issueCache = new SmartCache(300);
     }
-    
+
     public void afterPropertiesSet() throws Exception {
         if (startWorker) {
             worker = new IssueRefresherWorker();
@@ -69,24 +72,33 @@ public class DefaultProjectIssueScraper implements IProjectIssueScraper, Initial
             workerThread.start();
         }
     }
-    
+
     public void stop() {
         if (worker != null) {
             worker.setRunning(false);
         }
     }
 
+    private String buildLookupUrl(String id) {
+        String lookupUrl = issueLookupUrl.replaceAll(issueIdToken, id);
+        if (proxy != null && proxyToken != null) {
+            return proxy.replaceAll(proxyToken, lookupUrl);
+        } else {
+            return lookupUrl;
+        }
+    }
+
     public List<IIssue> getIssues() {
         return Collections.unmodifiableList(new ArrayList<IIssue>(issueCache.values()));
     }
-    
+
     public IIssue getIssue(String id) {
         return getIssue(id, false);
     }
-    
+
     public IIssue getIssue(String id, boolean forceQuery) {
         IIssue issue = null;
-        
+
         if (!forceQuery) {
             issue = issueCache.get(id);
             if (log.isDebugEnabled()) {
@@ -97,19 +109,20 @@ public class DefaultProjectIssueScraper implements IProjectIssueScraper, Initial
                 }
             }
         }
-        
+
         if (issue == null) {
-            String issueUrl = issueLookupUrl.replaceAll(issueIdToken, id);
+            String issueUrl = buildLookupUrl(id);
             if (log.isDebugEnabled()) {
                 log.debug("issueUrl: " + issueUrl);
             }
             fetchIssues(issueUrl);
             issue = issueCache.get(id);
-                    
+
             if (issue == null) {
                 log.warn("Attempted to fetch issue(" +
                     project + ", " + issueUrl + ", " + id+ ") returned no issue.");
             }
+            issue.setIssueScraperUrls(issueUrl, issueLookupUrl.replaceAll(issueIdToken, id));
         }
         if (log.isDebugEnabled()) {
             log.debug("returing issue for id("+id+"): " + issue);
@@ -124,7 +137,7 @@ public class DefaultProjectIssueScraper implements IProjectIssueScraper, Initial
         }
         return null;
     }
-    
+
     public boolean isUrlFromThisProject(String url) {
         Matcher m1 = issueUrlPattern.matcher(url);
         Matcher m2 = issueIdPattern.matcher(url);
@@ -135,20 +148,20 @@ public class DefaultProjectIssueScraper implements IProjectIssueScraper, Initial
         }
         return b1 && b2;
     }
-    
+
     public List<IIssue> fetchNamedQuery(String queryName) {
         return fetchNamedQuery(queryName, false);
     }
-    
+
     public List<IIssue> fetchNamedQuery(String queryName, boolean forceQuery) {
         if (queryName == null || emptyString.equals(queryName.trim())) {
             throw new RuntimeException("queryName must be specified.");
         }
         URL url = namedQueries.get(queryName);
         if (url == null) return Collections.EMPTY_LIST;
-        
+
         List<IIssue> issues = null;
-        
+
         if (!forceQuery) {
 	        issues = queryCache.get(queryName);
 	        if (log.isDebugEnabled()) {
@@ -160,39 +173,39 @@ public class DefaultProjectIssueScraper implements IProjectIssueScraper, Initial
             }
 
         }
-        
+
         if (issues == null) {
             issues = fetchIssues(url.toString());
             queryCache.put(queryName, issues);
         }
-        
+
         return issues;
     }
 
     protected List<IIssue> fetchIssues(String url) {
         List<IIssue> issues = new ArrayList<IIssue>();
         fetchIssues(url, issues);
-        
+
         // set the project name for all the issues
         for (IIssue issue : issues) {
             issue.setProject(project);
         }
         return issues;
     }
-    
+
     private void fetchIssues(String url, List<IIssue> issues) {
-        
+
         if (log.isDebugEnabled()) {
             log.debug("fetching issues at url: " + url);
         }
-        
+
         HttpClient client = new HttpClient();
         GetMethod method = null;
-        
+
         try {
             method = new GetMethod(url);
             method.setFollowRedirects(true);
-            
+
             int rc = client.executeMethod(method);
             if (rc == 200) {
                 long t = System.currentTimeMillis();
@@ -242,7 +255,7 @@ public class DefaultProjectIssueScraper implements IProjectIssueScraper, Initial
             }
         }
     }
-    
+
     private void dumpElement(Element el) {
         if (!log.isDebugEnabled()) return;
 
@@ -256,10 +269,10 @@ public class DefaultProjectIssueScraper implements IProjectIssueScraper, Initial
             log.error("Failed to dump element.", e);
         }
     }
-    
+
     protected String getNextUrl(Document document) {
         String nextUrl = null;
-        
+
         if (issueParser.getPaginationUrlXPath() != null) {
             Element root = document.getRootElement();
             Node node = root.selectSingleNode(issueParser.getPaginationUrlXPath());
@@ -276,13 +289,13 @@ public class DefaultProjectIssueScraper implements IProjectIssueScraper, Initial
                         nextUrl = itr.next().intercept(nextUrl);
                     }
                 }
-            } 
+            }
         }
-        
-        
+
+
         return nextUrl;
     }
-    
+
     protected String interceptStream(InputStream is) throws IOException {
         InputStream modifiedStream = is;
         if (streamInterceptors != null) {
@@ -304,10 +317,10 @@ public class DefaultProjectIssueScraper implements IProjectIssueScraper, Initial
         }
         return sb.toString();
     }
-    
+
     protected String interceptString(String content) {
         String modifiedContent = content;
-        
+
         if (stringInterceptors != null) {
             Iterator<IStringInterceptor> itr = stringInterceptors.iterator();
             while (itr.hasNext()) {
@@ -321,7 +334,7 @@ public class DefaultProjectIssueScraper implements IProjectIssueScraper, Initial
         }
         return modifiedContent;
     }
-    
+
     protected void interceptDom(Document document) {
         if (domInterceptors != null) {
             Iterator<IDomInterceptor> itr = domInterceptors.iterator();
@@ -335,7 +348,7 @@ public class DefaultProjectIssueScraper implements IProjectIssueScraper, Initial
             }
         }
     }
-    
+
     public Map<String, URL> getNamedQueries() {
         return namedQueries;
     }
@@ -351,7 +364,7 @@ public class DefaultProjectIssueScraper implements IProjectIssueScraper, Initial
     public void setIssueParser(IIssueParser issueParser) {
         this.issueParser = issueParser;
     }
-    
+
     public IIssueParser getQueryParser() {
         return queryParser;
     }
@@ -383,7 +396,7 @@ public class DefaultProjectIssueScraper implements IProjectIssueScraper, Initial
     public void setStreamInterceptors(List<IStreamInterceptor> streamInterceptors) {
         this.streamInterceptors = streamInterceptors;
     }
-    
+
     public int getRefreshPeriod() {
         return refreshPeriod;
     }
@@ -391,7 +404,7 @@ public class DefaultProjectIssueScraper implements IProjectIssueScraper, Initial
     public void setRefreshPeriod(int refreshPeriod) {
         this.refreshPeriod = refreshPeriod;
     }
-    
+
     public String getIssueUrlExpression() {
         return issueUrlExpression;
     }
@@ -433,11 +446,11 @@ public class DefaultProjectIssueScraper implements IProjectIssueScraper, Initial
         this.issueIdExpression = issueIdExpression;
         this.issueIdPattern = Pattern.compile(issueIdExpression);
     }
-    
+
     protected class IssueRefresherWorker implements Runnable {
-        
+
         private boolean running = true;
-        
+
         public void run() {
             while (running) {
                 Iterator<String> namedQueryItr = namedQueries.keySet().iterator();
@@ -460,7 +473,7 @@ public class DefaultProjectIssueScraper implements IProjectIssueScraper, Initial
         public void setRunning(boolean running) {
             this.running = running;
         }
-        
+
     }
 
     public Map<String, IIssue> getIssueCache() {
@@ -487,4 +500,19 @@ public class DefaultProjectIssueScraper implements IProjectIssueScraper, Initial
         this.startWorker = startWorker;
     }
 
+    public String getProxyToken() {
+        return proxyToken;
+    }
+
+    public void setProxyToken(String proxyToken) {
+        this.proxyToken = proxyToken;
+    }
+
+    public String getProxy() {
+        return proxy;
+    }
+
+    public void setProxy(String proxy) {
+        this.proxy = proxy;
+    }
 }

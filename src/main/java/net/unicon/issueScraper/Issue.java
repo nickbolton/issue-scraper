@@ -2,7 +2,7 @@ package net.unicon.issueScraper;
 
 
 public class Issue implements IIssue {
-    
+
     private String id;
     private String project;
     private String assignee;
@@ -16,7 +16,9 @@ public class Issue implements IIssue {
     private String summary;
     private String type;
     private boolean closed;
-    
+    private String issueScraperUrl;
+    private String proxiedIssueScraperUrl;
+
     public String toString() {
         StringBuffer sb = new StringBuffer();
         sb.append('(').append(id).append(',');
@@ -121,7 +123,7 @@ public class Issue implements IIssue {
     public void setType(String s) {
         this.type = s;
     }
-    
+
     public boolean isClosed() {
         return closed;
     }
@@ -136,5 +138,18 @@ public class Issue implements IIssue {
 
     public void setProject(String project) {
         this.project = project;
+    }
+
+    public void setIssueScraperUrls(String proxiedUrl, String issueScraperUrl) {
+        this.issueScraperUrl = issueScraperUrl;
+        proxiedIssueScraperUrl = proxiedUrl;
+    }
+
+    public String getIssueScaperUrl(boolean useProxy) {
+        if (useProxy && proxiedIssueScraperUrl != null) {
+            return proxiedIssueScraperUrl;
+        } else {
+            return issueScraperUrl;
+        }
     }
 }
