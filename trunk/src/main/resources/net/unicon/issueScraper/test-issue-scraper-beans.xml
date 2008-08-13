@@ -1,0 +1,849 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<!--
+    Properties for DefaultProjectIssueScraper beans:
+    
+    issueUrlExpression: A regular expression used define URLs that belong
+    to this project.
+    
+    issueIdExpression : A regular expression used to parse out the issue
+    ID from an URL. An URL must match both
+    issueUrlExpression and issueIdExpression to
+    belong to a project.
+    
+    issueIdToken      : These two are used to build issue URLs.
+    issueLookupUrl   	The token will be replaced with the actual issueId.
+    
+    startWorker       : If set to true, this will start a worker thread
+    that continuously refreshes all the defined
+    named queries.
+    
+    refreshPeriod	  : The refresh period for the worker.
+    
+    namedQueries      : A map of named queries.  Each entry is an URL
+    that defines a search query into the issue tracking
+    system.		
+    
+    issueParser       : The parser that's used to parse individual issue
+    URL queries.
+    
+    queryParser		  : The parser that's used to parse the named queries.
+    
+    issueCache        : The backing cache used to cache issue queries. 
+    This cache is then wrapped in a Collections
+    synchronized map. The SmartCache used here
+    will purge entries that haven't been accessed
+    within the specified seconds. 
+    
+    queryCache	      : The cache used to cache the named queries.
+    See issueCache.
+    
+    streamInterceptors: A list of interceptors that are invoked once
+    the query content stream is received.
+    
+    stringInterceptors: A list of interceptors that are invoked once
+    the query content stream is converted into
+    a String object.
+    
+    domInterceptors   : A list of interceptors that are invoked once
+    the converted String (from the query content stream)
+    has been parsed into a DOM.
+    The DOM interceptors use dom4j domain objects.
+    
+    
+    Properties for DefaultIssueParser beans:    
+    
+    issuesXPath               : An optional xpath expression that defines the issue element(s)
+    from where all the mapped property xpath expressions
+    are defined.
+    
+    issueXPathMap             : A map of issue attributes to the xpath expression
+    to the value of that attribute.  The xpath expression
+    is defined relative to the issuesXPath expression.
+    If issuesXPath is not defined, these expressions
+    are relative to the root of the document. Each
+    entry value is of type IIssuePropertyParser.
+    
+    closedStatusSet           : A set of statuses that define the issue as closed.
+    An issue with any of these statuses will be marked
+    as closed.
+    
+    paginationUrlXPath        : An optional xpath expression where the "Next" link
+    is located. When defined, the scraper will follow
+    this link concatenating the issues until the
+    link does not exist.
+    
+    paginationUrlInterceptors : A optional list of of String interceptors
+    that will be applied to the pagination url
+    prior to following it.
+    
+    
+    IssuePropertyParser Properties:
+    XPath        : The xpath expression to the property.
+    
+    interceptors : An optional list of String interceptors that
+    are applied just before calling the setter
+    to the issue object.
+-->
+
+<beans default-lazy-init="true">
+
+	<bean id="issueTrackerManager" class="net.unicon.issueScraper.IssueTrackerManager" singleton="true">
+		<property name="scraperMap">
+			<map>
+				<entry key="uPortal"><ref bean="uPortalIssuesScraper"/></entry>
+				<entry key="Sakai"><ref bean="sakaiIssuesScraper"/></entry>
+				<entry key="Groups and Permissions"><ref bean="gapIssuesScraper"/></entry>
+				<entry key="Web Proxy Portlet"><ref bean="wppIssuesScraper"/></entry>
+				<entry key="OpenToro"><ref bean="toroChannelsIssuesScraper"/></entry>
+				<entry key="USC Announcements"><ref bean="uscAnnouncementsIssuesScraper"/></entry>
+				<entry key="UBC Webmail"><ref bean="ubcWebmailIssuesScraper"/></entry>
+				<entry key="Bookmarks Channel"><ref bean="bookmarksChannelIssuesScraper"/></entry>
+				<entry key="Bookmarks Portlet"><ref bean="bookmarksPortletIssuesScraper"/></entry>
+			</map>
+		</property>
+	</bean>
+	
+	<bean id="uPortalIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          singleton="true">
+        <property name="project"><value>uPortal</value></property>
+        <property name="issueUrlExpression"><value>http://www.ja-sig.org/issues/browse/.*</value></property>
+        <property name="issueIdExpression"><value>.*(UP-[0-9]+)</value></property>
+    	<property name="issueIdToken"><value>%ISSUE_ID%</value></property>
+    	<property name="proxyToken"><value>%URL%</value></property>
+    	<property name="proxy"><value>http://atlas.unicon.net:8085/webcache/cache?url=%URL%</value></property>
+    	<property name="issueLookupUrl"><value>http://www.ja-sig.org/issues/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
+    	<property name="startWorker"><value>false</value></property>
+        <property name="refreshPeriod"><value>300</value></property>
+        <property name="namedQueries">
+        	<map>
+        		<entry key="open">
+			        <bean class="java.net.URL">
+		        		<constructor-arg><value>http://www.ja-sig.org/issues/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?&amp;pid=10020&amp;status=1&amp;status=3&amp;status=4&amp;sorter/field=issuekey&amp;sorter/order=DESC</value></constructor-arg>
+		        	</bean>
+        		</entry>
+        		<entry key="recent">
+			        <bean class="java.net.URL">
+		        		<constructor-arg><value>http://www.ja-sig.org/issues/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?&amp;created%3Aprevious=-1w&amp;pid=10020&amp;sorter/field=created&amp;sorter/order=DESC</value></constructor-arg>
+		        	</bean>
+        		</entry>
+        	</map>
+        </property>
+        <property name="issueParser"><ref bean="jiraIssueParser"/></property>
+        <property name="queryParser"><ref bean="jiraIssueParser"/></property>
+        <property name="issueCache">
+        	<bean class="net.unicon.issueScraper.SmartCache">
+        		<constructor-arg><value>300</value></constructor-arg>
+        	</bean>
+        </property>
+        <property name="queryCache">
+        	<bean class="net.unicon.issueScraper.SmartCache">
+        		<constructor-arg><value>300</value></constructor-arg>
+        	</bean>
+        </property>
+    </bean>
+    
+    <bean id="uscAnnouncementsIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          singleton="true">
+        <property name="project"><value>USC Announcements</value></property>
+        <property name="issueUrlExpression"><value>http://www.ja-sig.org/issues/browse/.*</value></property>
+        <property name="issueIdExpression"><value>.*(CAN-[0-9]+)</value></property>
+    	<property name="issueIdToken"><value>%ISSUE_ID%</value></property>
+    	<property name="proxyToken"><value>%URL%</value></property>
+    	<property name="proxy"><value>http://atlas.unicon.net:8085/webcache/cache?url=%URL%</value></property>
+    	<property name="issueLookupUrl"><value>http://www.ja-sig.org/issues/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
+    	<property name="startWorker"><value>false</value></property>
+        <property name="refreshPeriod"><value>300</value></property>
+        <property name="namedQueries">
+        	<map>
+        	</map>
+        </property>
+        <property name="issueParser"><ref bean="jiraIssueParser"/></property>
+        <property name="queryParser"><ref bean="jiraIssueParser"/></property>
+        <property name="issueCache">
+        	<bean class="net.unicon.issueScraper.SmartCache">
+        		<constructor-arg><value>300</value></constructor-arg>
+        	</bean>
+        </property>
+        <property name="queryCache">
+        	<bean class="net.unicon.issueScraper.SmartCache">
+        		<constructor-arg><value>300</value></constructor-arg>
+        	</bean>
+        </property>
+    </bean>
+    
+    <bean id="ubcWebmailIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          singleton="true">
+        <property name="project"><value>UBC Webmail</value></property>
+        <property name="issueUrlExpression"><value>http://www.ja-sig.org/issues/browse/.*</value></property>
+        <property name="issueIdExpression"><value>.*(UBCWEBMAIL-[0-9]+)</value></property>
+    	<property name="issueIdToken"><value>%ISSUE_ID%</value></property>
+    	<property name="proxyToken"><value>%URL%</value></property>
+    	<property name="proxy"><value>http://atlas.unicon.net:8085/webcache/cache?url=%URL%</value></property>
+    	<property name="issueLookupUrl"><value>http://www.ja-sig.org/issues/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
+    	<property name="startWorker"><value>false</value></property>
+        <property name="refreshPeriod"><value>300</value></property>
+        <property name="namedQueries">
+        	<map>
+        	</map>
+        </property>
+        <property name="issueParser"><ref bean="jiraIssueParser"/></property>
+        <property name="queryParser"><ref bean="jiraIssueParser"/></property>
+        <property name="issueCache">
+        	<bean class="net.unicon.issueScraper.SmartCache">
+        		<constructor-arg><value>300</value></constructor-arg>
+        	</bean>
+        </property>
+        <property name="queryCache">
+        	<bean class="net.unicon.issueScraper.SmartCache">
+        		<constructor-arg><value>300</value></constructor-arg>
+        	</bean>
+        </property>
+    </bean>
+    
+    <bean id="bookmarksChannelIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          singleton="true">
+        <property name="project"><value>Bookmarks Channel</value></property>
+        <property name="issueUrlExpression"><value>http://www.ja-sig.org/issues/browse/.*</value></property>
+        <property name="issueIdExpression"><value>.*(BOOKMARKS-[0-9]+)</value></property>
+    	<property name="issueIdToken"><value>%ISSUE_ID%</value></property>
+    	<property name="proxyToken"><value>%URL%</value></property>
+    	<property name="proxy"><value>http://atlas.unicon.net:8085/webcache/cache?url=%URL%</value></property>
+    	<property name="issueLookupUrl"><value>http://www.ja-sig.org/issues/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
+    	<property name="startWorker"><value>false</value></property>
+        <property name="refreshPeriod"><value>300</value></property>
+        <property name="namedQueries">
+        	<map>
+        	</map>
+        </property>
+        <property name="issueParser"><ref bean="jiraIssueParser"/></property>
+        <property name="queryParser"><ref bean="jiraIssueParser"/></property>
+        <property name="issueCache">
+        	<bean class="net.unicon.issueScraper.SmartCache">
+        		<constructor-arg><value>300</value></constructor-arg>
+        	</bean>
+        </property>
+        <property name="queryCache">
+        	<bean class="net.unicon.issueScraper.SmartCache">
+        		<constructor-arg><value>300</value></constructor-arg>
+        	</bean>
+        </property>
+    </bean>
+    
+    <bean id="bookmarksPortletIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          singleton="true">
+        <property name="project"><value>Bookmarks Portlet</value></property>
+        <property name="issueUrlExpression"><value>http://www.ja-sig.org/issues/browse/.*</value></property>
+        <property name="issueIdExpression"><value>.*(PBOOK-[0-9]+)</value></property>
+    	<property name="issueIdToken"><value>%ISSUE_ID%</value></property>
+    	<property name="proxyToken"><value>%URL%</value></property>
+    	<property name="proxy"><value>http://atlas.unicon.net:8085/webcache/cache?url=%URL%</value></property>
+    	<property name="issueLookupUrl"><value>http://www.ja-sig.org/issues/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
+    	<property name="startWorker"><value>false</value></property>
+        <property name="refreshPeriod"><value>300</value></property>
+        <property name="namedQueries">
+        	<map>
+        	</map>
+        </property>
+        <property name="issueParser"><ref bean="jiraIssueParser"/></property>
+        <property name="queryParser"><ref bean="jiraIssueParser"/></property>
+        <property name="issueCache">
+        	<bean class="net.unicon.issueScraper.SmartCache">
+        		<constructor-arg><value>300</value></constructor-arg>
+        	</bean>
+        </property>
+        <property name="queryCache">
+        	<bean class="net.unicon.issueScraper.SmartCache">
+        		<constructor-arg><value>300</value></constructor-arg>
+        	</bean>
+        </property>
+    </bean>
+    <bean id="sakaiIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          singleton="true">
+        <property name="project"><value>Sakai</value></property>
+        <property name="issueUrlExpression"><value>http://bugs.sakaiproject.org/jira/browse/.*</value></property>
+        <property name="issueIdExpression"><value>.*(SAK-[0-9]+)</value></property>
+    	<property name="issueIdToken"><value>%ISSUE_ID%</value></property>
+    	<property name="proxyToken"><value>%URL%</value></property>
+    	<property name="proxy"><value>http://atlas.unicon.net:8085/webcache/cache?url=%URL%</value></property>
+    	<property name="issueLookupUrl"><value>http://bugs.sakaiproject.org/jira/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
+    	<!--property name="issueLookupUrl"><value>http://bugs.sakaiproject.org/jira/browse/%ISSUE_ID%?decorator=none&amp;view=rss</value></property-->
+    	<property name="startWorker"><value>false</value></property>
+        <property name="refreshPeriod"><value>300</value></property>
+        <property name="namedQueries">
+        	<map>
+        		<entry key="open">
+			        <bean class="java.net.URL">
+		        		<constructor-arg><value>http://bugs.sakaiproject.org/jira/secure/IssueNavigator.jspa?view=rss&amp;&amp;pid=10010&amp;status=1&amp;status=3&amp;status=4&amp;sorter/field=issuekey&amp;sorter/order=DESC&amp;tempMax=25&amp;reset=true&amp;decorator=none</value></constructor-arg>
+		        	</bean>
+        		</entry>
+        		<entry key="closed">
+			        <bean class="java.net.URL">
+		        		<constructor-arg><value>http://bugs.sakaiproject.org/jira/secure/IssueNavigator.jspa?view=rss&amp;&amp;pid=10010&amp;status=5&amp;status=6&amp;sorter/field=issuekey&amp;sorter/order=DESC&amp;tempMax=25&amp;reset=true&amp;decorator=none</value></constructor-arg>
+		        	</bean>
+        		</entry>
+        	</map>
+        </property>
+        <property name="issueParser"><ref bean="jiraIssueParser"/></property>
+        <property name="queryParser"><ref bean="jiraIssueParser"/></property>
+        <property name="issueCache">
+        	<bean class="net.unicon.issueScraper.SmartCache">
+        		<constructor-arg><value>300</value></constructor-arg>
+        	</bean>
+        </property>
+        <property name="queryCache">
+        	<bean class="net.unicon.issueScraper.SmartCache">
+        		<constructor-arg><value>300</value></constructor-arg>
+        	</bean>
+        </property>
+    </bean>
+    
+    <bean id="toroChannelsIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          singleton="true">
+        <property name="project"><value>OpenToro</value></property>
+        <property name="issueUrlExpression"><value>http://www.ja-sig.org/issues/browse/.*</value></property>
+        <property name="issueIdExpression"><value>.*(TORO-[0-9]+)</value></property>
+    	<property name="issueIdToken"><value>%ISSUE_ID%</value></property>
+    	<property name="proxyToken"><value>%URL%</value></property>
+    	<property name="proxy"><value>http://atlas.unicon.net:8085/webcache/cache?url=%URL%</value></property>
+    	<property name="issueLookupUrl"><value>http://www.ja-sig.org/issues/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
+    	<property name="startWorker"><value>false</value></property>
+        <property name="refreshPeriod"><value>300</value></property>
+        <property name="namedQueries">
+        	<map>
+        		<entry key="open">
+			        <bean class="java.net.URL">
+		        		<constructor-arg><value>http://www.ja-sig.org/issues/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?&amp;pid=10130&amp;status=1&amp;status=3&amp;status=4&amp;sorter/field=issuekey&amp;sorter/order=DESC</value></constructor-arg>
+		        	</bean>
+        		</entry>
+        		<entry key="closed">
+			        <bean class="java.net.URL">
+		        		<constructor-arg><value>http://www.ja-sig.org/issues/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?&amp;pid=10130&amp;status=5&amp;status=6&amp;sorter/field=issuekey&amp;sorter/order=DESC</value></constructor-arg>
+		        	</bean>
+        		</entry>
+        	</map>
+        </property>
+        <property name="issueParser"><ref bean="jiraIssueParser"/></property>
+        <property name="queryParser"><ref bean="jiraIssueParser"/></property>
+        <property name="issueCache">
+        	<bean class="net.unicon.issueScraper.SmartCache">
+        		<constructor-arg><value>300</value></constructor-arg>
+        	</bean>
+        </property>
+        <property name="queryCache">
+        	<bean class="net.unicon.issueScraper.SmartCache">
+        		<constructor-arg><value>300</value></constructor-arg>
+        	</bean>
+        </property>
+    </bean>
+    
+    <bean id="wppIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          singleton="true">
+        <property name="project"><value>Web Proxy Portlet</value></property>
+        <property name="issueUrlExpression"><value>http://www.ja-sig.org/issues/browse/.*</value></property>
+        <property name="issueIdExpression"><value>.*(WPP-[0-9]+)</value></property>
+    	<property name="issueIdToken"><value>%ISSUE_ID%</value></property>
+    	<property name="proxyToken"><value>%URL%</value></property>
+    	<property name="proxy"><value>http://atlas.unicon.net:8085/webcache/cache?url=%URL%</value></property>
+    	<property name="issueLookupUrl"><value>http://www.ja-sig.org/issues/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
+    	<property name="startWorker"><value>false</value></property>
+        <property name="refreshPeriod"><value>300</value></property>
+        <property name="namedQueries">
+        	<map>
+        		<entry key="open">
+			        <bean class="java.net.URL">
+		        		<constructor-arg><value>http://www.ja-sig.org/issues/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?&amp;pid=10130&amp;status=1&amp;status=3&amp;status=4&amp;sorter/field=issuekey&amp;sorter/order=DESC</value></constructor-arg>
+		        	</bean>
+        		</entry>
+        		<entry key="closed">
+			        <bean class="java.net.URL">
+		        		<constructor-arg><value>http://www.ja-sig.org/issues/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?&amp;pid=10130&amp;status=5&amp;status=6&amp;sorter/field=issuekey&amp;sorter/order=DESC</value></constructor-arg>
+		        	</bean>
+        		</entry>
+        	</map>
+        </property>
+        <property name="issueParser"><ref bean="jiraIssueParser"/></property>
+        <property name="queryParser"><ref bean="jiraIssueParser"/></property>
+        <property name="issueCache">
+        	<bean class="net.unicon.issueScraper.SmartCache">
+        		<constructor-arg><value>300</value></constructor-arg>
+        	</bean>
+        </property>
+        <property name="queryCache">
+        	<bean class="net.unicon.issueScraper.SmartCache">
+        		<constructor-arg><value>300</value></constructor-arg>
+        	</bean>
+        </property>
+    </bean>
+    
+    <bean id="gapIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          singleton="true">
+        <property name="project"><value>Groups and Permissions</value></property>
+        <property name="issueUrlExpression"><value>http://www.ja-sig.org/issues/browse/.*</value></property>
+        <property name="issueIdExpression"><value>.*(GAP-[0-9]+)</value></property>
+    	<property name="issueIdToken"><value>%ISSUE_ID%</value></property>
+    	<property name="proxyToken"><value>%URL%</value></property>
+    	<property name="proxy"><value>http://atlas.unicon.net:8085/webcache/cache?url=%URL%</value></property>
+    	<property name="issueLookupUrl"><value>http://www.ja-sig.org/issues/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
+    	<property name="startWorker"><value>false</value></property>
+        <property name="refreshPeriod"><value>300</value></property>
+        <property name="namedQueries">
+        	<map>
+        		<entry key="open">
+			        <bean class="java.net.URL">
+		        		<constructor-arg><value>http://www.ja-sig.org/issues/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?&amp;pid=10130&amp;status=1&amp;status=3&amp;status=4&amp;sorter/field=issuekey&amp;sorter/order=DESC</value></constructor-arg>
+		        	</bean>
+        		</entry>
+        		<entry key="closed">
+			        <bean class="java.net.URL">
+		        		<constructor-arg><value>http://www.ja-sig.org/issues/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?&amp;pid=10130&amp;status=5&amp;status=6&amp;sorter/field=issuekey&amp;sorter/order=DESC</value></constructor-arg>
+		        	</bean>
+        		</entry>
+        	</map>
+        </property>
+        <property name="issueParser"><ref bean="jiraIssueParser"/></property>
+        <property name="queryParser"><ref bean="jiraIssueParser"/></property>
+        <property name="issueCache">
+        	<bean class="net.unicon.issueScraper.SmartCache">
+        		<constructor-arg><value>300</value></constructor-arg>
+        	</bean>
+        </property>
+        <property name="queryCache">
+        	<bean class="net.unicon.issueScraper.SmartCache">
+        		<constructor-arg><value>300</value></constructor-arg>
+        	</bean>
+        </property>
+    </bean>
+    
+    <bean id="jiraIssueParser" class="net.unicon.issueScraper.DefaultIssueParser" singleton="true">
+        <property name="issuesXPath"><value>//item</value></property>
+        <property name="issueXPathMap">
+        	<map>
+        		<entry key="id">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>key[1]</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="issueUrl">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>link</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="description">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>description</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="environment">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>environment</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="summary">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>summary</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="type">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>type</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="priority">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>priority</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="status">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>status</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="resolution">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>resolution</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="assignee">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>assignee</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="reporter">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>reporter</value></property>
+        			</bean>
+        		</entry>
+        	</map>
+        </property>
+        <property name="closedStatusSet">
+        	<set>
+        		<value>Resolved</value>
+        		<value>Closed</value>
+        	</set>
+        </property>
+    </bean>
+    
+    <bean id="googleIssueParser" class="net.unicon.issueScraper.DefaultIssueParser" singleton="true">
+        <property name="issueXPathMap">
+        	<map>
+        		<entry key="id">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>//*[name()='div' and @id='issueheader']/*[name()='table']/*[name()='tbody']/*[name()='tr' and position()=1]/*[name()='td' and position()=1]/*[name()='a']</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="issueUrl">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>//*[name()='div' and @id='issueheader']/*[name()='table']/*[name()='tbody']/*[name()='tr' and position()=1]/*[name()='td' and position()=1]/*[name()='a']/@href</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="summary">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>//*[name()='div' and @id='issueheader']/*[name()='table']/*[name()='tbody']/*[name()='tr' and position()=1]/*[name()='td' and position()=2]/*[name()='span']</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="status">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>//*[name()='td' and @id='issuemeta']/*[name()='table']/*[name()='tr' and position()=1]/*[name()='td']</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="assignee">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>//*[name()='td' and @id='issuemeta']/*[name()='table']/*[name()='tr' and position()=2]/*[name()='td']/*[name()='a']</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="type">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>//*[name()='td' and @id='issuemeta']/*[name()='table']/*[name()='tr' and position()=3]/*[name()='td']/*[name()='a']</value></property>
+        				<property name="interceptors">
+        					<list>
+        						<bean class="net.unicon.issueScraper.RegexStringInterceptor">
+				        			<property name="name"><value>Google Issue Type Property Interceptor</value></property>
+				        			<property name="pattern"><value>.*/b></value></property>
+				        			<property name="replacement"><value>+</value></property>
+				        		</bean>
+        					</list>
+        				</property>
+        			</bean>
+        		</entry>
+	        	<entry key="priority">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>//*[name()='td' and @id='issuemeta']/*[name()='table']/*[name()='tr' and position()=4]/*[name()='td']/*[name()='a']</value></property>
+        				<property name="interceptors">
+        					<list>
+        						<bean class="net.unicon.issueScraper.RegexStringInterceptor">
+				        			<property name="name"><value>Google Issue Priority Property Interceptor</value></property>
+				        			<property name="pattern"><value>.*/b></value></property>
+				        			<property name="replacement"><value>+</value></property>
+				        		</bean>
+        					</list>
+        				</property>
+        			</bean>
+        		</entry>
+        		<entry key="description">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>//*[name()='td' and @class='vt issuedescription']/*[name()='div']/*[name()='pre']</value></property>
+        			</bean>
+        		</entry>
+        	</map>
+        </property>
+        <property name="paginationUrlInterceptors">
+        	<list>
+        		<bean class="net.unicon.issueScraper.RegexStringInterceptor">
+        			<property name="name"><value>Google Issue Pagination Url Interceptor</value></property>
+        			<property name="pattern"><value> </value></property>
+        			<property name="replacement"><value>+</value></property>
+        		</bean>
+        	</list>
+        </property>
+        <property name="closedStatusSet">
+        	<set>
+        		<value>Fixed</value>
+        		<value>Verified</value>
+        		<value>Invalid</value>
+        		<value>Duplicate</value>
+        		<value>WontFix</value>
+        	</set>
+        </property>
+    </bean>
+    
+    <bean id="googleQueryParser" class="net.unicon.issueScraper.DefaultIssueParser" singleton="true">
+        <property name="issuesXPath"><value>//*[name()='tbody']/*[name()='tr' and position()>1]</value></property>
+        <property name="paginationUrlXPath"><value>//*[name()='a' and contains(text(), 'Next')]/@href</value></property>
+        <property name="issueXPathMap">
+        	<map>
+        		<entry key="id">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>*[name()='td' and position()=2]/*[name()='a']</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="issueUrl">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>*[name()='td' and position()=2]/*[name()='a']/@href</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="type">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>*[name()='td' and position()=3]/*[name()='a']</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="status">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>*[name()='td' and position()=4]/*[name()='a']</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="priority">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>*[name()='td' and position()=5]</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="assignee">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>*[name()='td' and position()=7]/*[name()='a']</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="summary">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>*[name()='td' and position()=9]/*[name()='a']</value></property>
+        			</bean>
+        		</entry>
+        	</map>
+        </property>
+        <property name="paginationUrlInterceptors">
+        	<list>
+        		<bean class="net.unicon.issueScraper.RegexStringInterceptor">
+        			<property name="name"><value>Google Query Pagination Url Interceptor</value></property>
+        			<property name="pattern"><value> </value></property>
+        			<property name="replacement"><value>+</value></property>
+        		</bean>
+        	</list>
+        </property>
+        <property name="closedStatusSet">
+        	<set>
+        		<value>Fixed</value>
+        		<value>Verified</value>
+        		<value>Invalid</value>
+        		<value>Duplicate</value>
+        		<value>WontFix</value>
+        	</set>
+        </property>
+    </bean>
+    
+    <bean id="sourceForgeIssueParser" class="net.unicon.issueScraper.DefaultIssueParser" singleton="true">
+        <property name="issuePageLinkPrefix"><value>http://sourceforge.net</value></property>
+        <property name="paginationUrlXPath"><value>//*[name()='a' and contains(text(), 'Next')]/@href</value></property>
+        <property name="issueXPathMap">
+        	<map>
+        		<entry key="id">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>//*[name()='div' and @id='innerframe']/*[name()='h2']</value></property>
+        				<property name="interceptors">
+        					<list>
+        						<bean class="net.unicon.issueScraper.RegexStringInterceptor">
+            			            <property name="name"><value>SourceForge Issue ID Property Interceptor1</value></property>
+				        			<property name="pattern"><value>^.[ \t]+</value></property>
+				        			<property name="replacement"><value></value></property>
+				        		</bean>
+        						<bean class="net.unicon.issueScraper.RegexStringInterceptor">
+            			            <property name="name"><value>SourceForge Issue ID Property Interceptor2</value></property>
+				        			<property name="pattern"><value>[ \t]+].*</value></property>
+				        			<property name="replacement"><value></value></property>
+				        		</bean>
+        					</list>
+        				</property>
+        			</bean>
+        		</entry>
+        		<entry key="issueUrl">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>//*[name()='ul' and @id='breadcrumb']/*[name()='li' and position()=6]/*[name()='a']/@href</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="summary">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>//*[name()='div' and @id='innerframe']/*[name()='h2']</value></property>
+        				<property name="interceptors">
+        					<list>
+        						<bean class="net.unicon.issueScraper.RegexStringInterceptor">
+            			            <property name="name"><value>SourceForge Issue Summary Property Interceptor</value></property>
+				        			<property name="pattern"><value>.*\[[ \t]+[0-9]+[ \t]+][ \t]+</value></property>
+				        			<property name="replacement"><value></value></property>
+				        		</bean>
+        					</list>
+        				</property>
+        			</bean>
+        		</entry>
+        		<entry key="reporter">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>//*[name()='div' and @id='innerframe']/*[name()='table']/*[name()='tr' and position()=2]/*[name()='td' and position()=1]</value></property>
+        				<property name="interceptors">
+        					<list>
+        						<bean class="net.unicon.issueScraper.RegexStringInterceptor">
+            			            <property name="name"><value>SourceForge Issue Reporter Property Interceptor</value></property>
+				        			<property name="pattern"><value>.*.br clear="none"/>\w*</value></property>
+				        			<property name="replacement"><value></value></property>
+				        		</bean>
+        					</list>
+        				</property>
+        			</bean>
+        		</entry>
+        		<entry key="assignee">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>//*[name()='div' and @id='innerframe']/*[name()='table']/*[name()='tr' and position()=6]/*[name()='td' and position()=1]</value></property>
+        				<property name="interceptors">
+        					<list>
+        						<bean class="net.unicon.issueScraper.RegexStringInterceptor">
+            			            <property name="name"><value>SourceForge Issue Assignee Property Interceptor</value></property>
+				        			<property name="pattern"><value>.*.br clear="none"/>\w*</value></property>
+				        			<property name="replacement"><value></value></property>
+				        		</bean>
+        					</list>
+        				</property>
+        			</bean>
+        		</entry>
+        		<entry key="priority">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>//*[name()='div' and @id='innerframe']/*[name()='table']/*[name()='tr' and position()=6]/*[name()='td' and position()=2]</value></property>
+        				<property name="interceptors">
+        					<list>
+        						<bean class="net.unicon.issueScraper.RegexStringInterceptor">
+            			            <property name="name"><value>SourceForge Issue Priority Property Interceptor</value></property>
+				        			<property name="pattern"><value>.*.br clear="none"/>\w*</value></property>
+				        			<property name="replacement"><value></value></property>
+				        		</bean>
+        					</list>
+        				</property>
+        			</bean>
+        		</entry>
+        		<entry key="status">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>//*[name()='div' and @id='innerframe']/*[name()='table']/*[name()='tr' and position()=7]/*[name()='td' and position()=1]</value></property>
+        				<property name="interceptors">
+        					<list>
+        						<bean class="net.unicon.issueScraper.RegexStringInterceptor">
+            			            <property name="name"><value>SourceForge Issue Status Property Interceptor</value></property>
+				        			<property name="pattern"><value>.*.br clear="none"/>\w*</value></property>
+				        			<property name="replacement"><value></value></property>
+				        		</bean>
+        					</list>
+        				</property>
+        			</bean>
+        		</entry>
+        		<entry key="resolution">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>//*[name()='div' and @id='innerframe']/*[name()='table']/*[name()='tr' and position()=7]/*[name()='td' and position()=2]</value></property>
+        				<property name="interceptors">
+        					<list>
+        						<bean class="net.unicon.issueScraper.RegexStringInterceptor">
+            			            <property name="name"><value>SourceForge Issue Resolution Property Interceptor</value></property>
+				        			<property name="pattern"><value>.*.br clear="none"/>\w*</value></property>
+				        			<property name="replacement"><value></value></property>
+				        		</bean>
+        					</list>
+        				</property>
+        			</bean>
+        		</entry>
+        		<entry key="description">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>//*[name()='div' and @id='innerframe']/*[name()='table']/*[name()='tr' and position()=9]/*[name()='td' and position()=1]</value></property>
+        				<property name="interceptors">
+        					<list>
+        						<bean class="net.unicon.issueScraper.RegexStringInterceptor">
+            			            <property name="name"><value>SourceForge Issue Description Property Prefix Interceptor</value></property>
+				        			<property name="pattern"><value>.*.!-- google_ad_section_start --.</value></property>
+				        			<property name="replacement"><value></value></property>
+				        		</bean>
+				        		<bean class="net.unicon.issueScraper.RegexStringInterceptor">
+            			            <property name="name"><value>SourceForge Issue Description Property Suffix Interceptor</value></property>
+				        			<property name="pattern"><value>[ \t]*.!-- google_ad_section_end --.*</value></property>
+				        			<property name="replacement"><value></value></property>
+				        		</bean>
+				        		<bean class="net.unicon.issueScraper.RegexStringInterceptor">
+            			            <property name="name"><value>SourceForge Issue Description Property Newline Interceptor</value></property>
+				        			<property name="pattern"><value>[ \t]*.br clear="none"/>[ \t]*</value></property>
+				        			<property name="replacement"><value>\n</value></property>
+				        		</bean>
+        					</list>
+        				</property>
+        			</bean>
+        		</entry>
+        	</map>
+        </property>
+        <property name="closedStatusSet">
+        	<set>
+        		<value>Closed</value>
+        		<value>Deleted</value>
+        	</set>
+        </property>
+    </bean>
+    
+    <bean id="sourceForgeQueryParser" class="net.unicon.issueScraper.DefaultIssueParser" singleton="true">
+        <property name="issuePageLinkPrefix"><value>http://sourceforge.net</value></property>
+        <property name="issuesXPath"><value>//*[name()='tbody']/*[name()='tr']</value></property>
+        <property name="paginationUrlXPath"><value>//*[name()='a' and contains(text(), 'Next')]/@href</value></property>
+        <property name="issueXPathMap">
+        	<map>
+        		<entry key="priority">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>*[name()='td' and position()=1]</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="id">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>*[name()='td' and position()=2]</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="type">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>*[name()='td' and position()=4]/*[name()='a']</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="summary">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>*[name()='td' and position()=5]/*[name()='a']</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="issueUrl">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>*[name()='td' and position()=5]/*[name()='a']/@href</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="assignee">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>*[name()='td' and position()=6]/*[name()='a']</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="reporter">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>*[name()='td' and position()=7]/*[name()='a']</value></property>
+        			</bean>
+        		</entry>
+        		<entry key="status">
+        			<bean class="net.unicon.issueScraper.IssuePropertyParser">
+        				<property name="XPath"><value>*[name()='td' and position()=8]</value></property>
+        			</bean>
+        		</entry>
+        	</map>
+        </property>
+        <property name="closedStatusSet">
+        	<set>
+        		<value>Closed</value>
+        		<value>Deleted</value>
+        	</set>
+        </property>
+    </bean>
+    
+    <bean id="jtidyInterceptor" class="net.unicon.issueScraper.JTidyInterceptor" singleton="true">
+        <property name="name"><value>JTidy Interceptor</value></property>
+    	<property name="quiet"><value>true</value></property>
+    </bean>
+</beans>
