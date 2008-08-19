@@ -1,0 +1,12 @@
+<project name="issueScraper" default="deploy">
+    <property file="build.properties"/>
+    <target name="deploy">
+        <delete dir="${deploy.home}/issueScraper"/>
+        <mkdir dir="${deploy.home}/issueScraper"/>
+        <unwar overwrite="true" dest="${deploy.home}/issueScraper">
+            <fileset dir="target">
+                <include name="issueScraper*war"/>
+            </fileset>
+        </unwar>
+    </target>
+</project>

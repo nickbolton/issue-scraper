@@ -1,8 +1,14 @@
 package net.unicon.issueScraper;
 
+import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+
 
 public class Issue implements IIssue {
 
+    private static final long serialVersionUID = 1L;
+    
     private String id;
     private String project;
     private String assignee;
@@ -151,5 +157,46 @@ public class Issue implements IIssue {
         } else {
             return issueScraperUrl;
         }
+    }
+
+    public Document toDocument() {
+        Document document = DocumentHelper.createDocument();
+        Element issue = document.addElement("issue");
+        issue.addElement("id").setText(id);
+        issue.addElement("project").setText(project);
+        issue.addElement("assignee").setText(assignee);
+        issue.addElement("environment").setText(environment);
+        issue.addElement("issueUrl").setText(issueUrl);
+        issue.addElement("priority").setText(priority);
+        issue.addElement("reporter").setText(reporter);
+        issue.addElement("resolution").setText(resolution);
+        issue.addElement("status").setText(status);
+        issue.addElement("type").setText(type);
+        issue.addElement("closed").setText(new Boolean(closed).toString());
+        issue.addElement("summary").setText(summary);
+        issue.addElement("description").setText(description);
+        return document;
+    }
+    
+    public IIssue fromDocument(Document doc) {
+        if (doc == null) return null;
+        Element root = doc.getRootElement();
+        if (!"issue".equals(root.getName())) return null;
+        
+        IIssue issue = new Issue();
+        issue.setId(root.elementText("id"));
+        issue.setProject(root.elementText("project"));
+        issue.setAssignee(root.elementText("assignee"));
+        issue.setEnvironment(root.elementText("environment"));
+        issue.setIssueUrl(root.elementText("issueUrl"));
+        issue.setPriority(root.elementText("priority"));
+        issue.setReporter(root.elementText("reporter"));
+        issue.setResolution(root.elementText("resolution"));
+        issue.setStatus(root.elementText("status"));
+        issue.setType(root.elementText("type"));
+        issue.setClosed(new Boolean(root.elementText("closed")));
+        issue.setSummary(root.elementText("summary"));
+        issue.setDescription(root.elementText("description"));
+        return issue;
     }
 }

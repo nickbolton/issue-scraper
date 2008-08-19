@@ -1,6 +1,10 @@
 package net.unicon.issueScraper;
 
-public interface IIssue {
+import java.io.Serializable;
+
+import org.dom4j.Document;
+
+public interface IIssue extends Serializable {
 
     public String getId();
     public void setId(String s);
@@ -30,4 +34,6 @@ public interface IIssue {
     public boolean isClosed();
     public String getIssueScaperUrl(boolean flag);
     public void setIssueScraperUrls(String s, String s1);
+    public Document toDocument();
+    public IIssue fromDocument(Document doc);
 }
