@@ -121,8 +121,9 @@ public class DefaultProjectIssueScraper implements IProjectIssueScraper, Initial
             if (issue == null) {
                 log.warn("Attempted to fetch issue(" +
                     project + ", " + issueUrl + ", " + id+ ") returned no issue.");
+            } else {
+                issue.setIssueScraperUrls(issueUrl, issueLookupUrl.replaceAll(issueIdToken, id));
             }
-            issue.setIssueScraperUrls(issueUrl, issueLookupUrl.replaceAll(issueIdToken, id));
         }
         if (log.isDebugEnabled()) {
             log.debug("returing issue for id("+id+"): " + issue);
