@@ -90,6 +90,14 @@ public class IssueScraperController extends AbstractCacheController {
                     element = new Element(issue.getIssueUrl(), issue);
                     cacheWrapper.put(element);
                     cacheUtility.storePreviousVersion(issueId, issueDoc);
+                    if (log.isDebugEnabled()) {
+                        if (cacheWrapper.get(issueId) == null) {
+                            log.debug("element not cached for key: " + issueId);
+                        }
+                        if (cacheWrapper.get(issue.getIssueUrl()) == null) {
+                            log.debug("element not cached for key: " + issue.getIssueUrl());
+                        }
+                    }
                 }
             } else {
                 if (log.isDebugEnabled()) {
@@ -140,6 +148,14 @@ public class IssueScraperController extends AbstractCacheController {
                     element = new Element(issue.getId(), issue);
                     cacheWrapper.put(element);
                     cacheUtility.storePreviousVersion(url, issueDoc);
+                    if (log.isDebugEnabled()) {
+                        if (cacheWrapper.get(url) == null) {
+                            log.debug("element not cached for key: " + url);
+                        }
+                        if (cacheWrapper.get(issue.getId()) == null) {
+                            log.debug("element not cached for key: " + issue.getId());
+                        }
+                    }
                 }
             } else {
                 if (log.isDebugEnabled()) {

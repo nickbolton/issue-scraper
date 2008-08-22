@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,6 +19,7 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
+import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.Node;
 import org.dom4j.io.OutputFormat;
@@ -60,7 +62,10 @@ public class DefaultProjectIssueScraper implements IProjectIssueScraper, Initial
 
     private String proxyToken;
     private String proxy;
-
+    private int connectionTimeout = 10000;
+    
+    private IAuthenticationForm authenticationForm;
+    
     public DefaultProjectIssueScraper() {
         issueCache = new SmartCache(300);
     }
@@ -189,7 +194,11 @@ public class DefaultProjectIssueScraper implements IProjectIssueScraper, Initial
 
         // set the project name for all the issues
         for (IIssue issue : issues) {
-            issue.setProject(project);
+            try {
+                issue.setProject(project);
+            } catch (Exception e) {
+                log.error(e);
+            }
         }
         return issues;
     }
@@ -201,12 +210,32 @@ public class DefaultProjectIssueScraper implements IProjectIssueScraper, Initial
         }
 
         HttpClient client = new HttpClient();
+        client.setTimeout(connectionTimeout);
+        client.setConnectionTimeout(connectionTimeout);
         GetMethod method = null;
 
         try {
             method = new GetMethod(url);
             method.setFollowRedirects(true);
 
+            if (authenticationForm != null) {
+                if (HttpMethodType.GET.equals(authenticationForm.getMethod())) {
+                    String s = method.getQueryString();
+                    if (s == null) {
+                        s = "";
+                    }
+                    StringBuffer qs = new StringBuffer(s);
+                    Map<String, String> parameters = authenticationForm.getParameters();
+                    for (Entry<String, String> e : parameters.entrySet()) {
+                        if (qs.length() > 0) {
+                            qs.append('&');
+                        }
+                        qs.append(e.getKey()).append('=').append(e.getValue());
+                    }
+                    method.setQueryString(qs.toString());
+                }
+            }
+            
             int rc = client.executeMethod(method);
             if (rc == 200) {
                 long t = System.currentTimeMillis();
@@ -223,7 +252,14 @@ public class DefaultProjectIssueScraper implements IProjectIssueScraper, Initial
                 }
                 SAXReader reader = new SAXReader();
                 t = System.currentTimeMillis();
-                Document document = reader.read(new StringReader(content));
+                Document document = null;
+                
+                try {
+                    document = reader.read(new StringReader(content));
+                } catch (DocumentException de) {
+                    log.error("Failed to parse content:\n" + content);
+                    throw de;
+                }
                 if (log.isDebugEnabled()) {
                     log.debug("parsing content into dom took " + (System.currentTimeMillis()-t) + " ms");
                 }
@@ -516,4 +552,22 @@ public class DefaultProjectIssueScraper implements IProjectIssueScraper, Initial
     public void setProxy(String proxy) {
         this.proxy = proxy;
     }
+    
+    public int getConnectionTimeout() {
+        return connectionTimeout;
+    }
+
+    public void setConnectionTimeout(int connectionTimeout) {
+        this.connectionTimeout = connectionTimeout;
+    }
+
+    public IAuthenticationForm getAuthenticationForm() {
+        return authenticationForm;
+    }
+
+    public void setAuthenticationForm(IAuthenticationForm authenticationForm) {
+        this.authenticationForm = authenticationForm;
+    }
+
+
 }
