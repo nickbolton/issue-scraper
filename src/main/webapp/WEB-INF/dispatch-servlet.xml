@@ -146,6 +146,7 @@
 				<entry key="Bookmarks Portlet"><ref bean="bookmarksPortletIssuesScraper"/></entry>
 				<entry key="Groups and Permissions"><ref bean="gapIssuesScraper"/></entry>
 				<entry key="Web Proxy Portlet"><ref bean="wppIssuesScraper"/></entry>
+				<entry key="OPS"><ref bean="opsIssuesScraper"/></entry>
 			</map>
 		</property>
 	</bean>
@@ -160,6 +161,7 @@
     	<property name="issueLookupUrl"><value>http://www.ja-sig.org/issues/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
     	<property name="startWorker"><value>false</value></property>
         <property name="refreshPeriod"><value>300</value></property>
+        <property name="connectionTimeout"><value>10000</value></property>
         <property name="issueParser"><ref bean="jiraIssueParser"/></property>
         <property name="queryParser"><ref bean="jiraIssueParser"/></property>
         <property name="issueCache">
@@ -212,6 +214,27 @@
         <property name="project"><value>Bookmarks Portlet</value></property>
         <property name="issueIdExpression"><value>.*(PBOOK-[0-9]+)</value></property>
     </bean>
+    <bean id="opsIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          parent="abstractIssueScraper">
+        <property name="project"><value>OPS</value></property>
+        <property name="issueUrlExpression"><value>https://jira.unicon.net/jira/browse/.*</value></property>
+        <property name="issueIdExpression"><value>.*(SAK-[0-9]+)</value></property>
+    	<property name="issueIdToken"><value>%ISSUE_ID%</value></property>
+    	<property name="issueLookupUrl"><value>https://jira.unicon.net/jira/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
+        <property name="authenticationForm">
+            <bean class="net.unicon.issueScraper.DefaultAuthenticationForm">
+                <property name="method" value="GET"/>
+                <property name="parameters">
+                    <map>
+                        <entry key="os_username" value="nbolton"/>
+                        <entry key="os_password" value="uqopklm1"/>
+                    </map>
+                </property>
+            </bean>
+        </property>
+    </bean>
+    
     <bean id="sakaiIssuesScraper"
           class="net.unicon.issueScraper.DefaultProjectIssueScraper"
           parent="abstractIssueScraper">
