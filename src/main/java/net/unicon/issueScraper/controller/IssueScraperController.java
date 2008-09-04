@@ -2,6 +2,8 @@ package net.unicon.issueScraper.controller;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -23,8 +25,11 @@ import org.springframework.web.servlet.ModelAndView;
 
 public class IssueScraperController extends AbstractCacheController {
     
+    private static final String IGNORE_EXTERNAL_SITES_KEY = "ignoreExternalSites";
+    
     private Log log = LogFactory.getLog(getClass());
     private IIssueTrackerManager issueTrackerManager;
+    private Map<String, String> configuration = new HashMap<String, String>();
         
     public IssueScraperController() {
         super();
@@ -33,12 +38,17 @@ public class IssueScraperController extends AbstractCacheController {
     public ModelAndView handleRequest(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException, DocumentException {
         
+        boolean ignoreExternalSites = false;
+        if (configuration.get(IGNORE_EXTERNAL_SITES_KEY) != null) {
+            ignoreExternalSites = new Boolean(configuration.get(IGNORE_EXTERNAL_SITES_KEY));
+        }
+        
         String url = req.getParameter("url");
         
         Document issueDoc = null;
         
         if (url != null) {
-            issueDoc = getIssue(url);
+            issueDoc = getIssue(url, ignoreExternalSites);
             if (issueDoc != null) {
                 sendIssue(resp.getWriter(), issueDoc);
                 return null;
@@ -48,7 +58,7 @@ public class IssueScraperController extends AbstractCacheController {
         String project = req.getParameter("project");
         String issueId = req.getParameter("issueId");
         if (project != null && issueId != null) {
-            issueDoc = getIssue(project, issueId);
+            issueDoc = getIssue(project, issueId, ignoreExternalSites);
             if (issueDoc != null) {
                 sendIssue(resp.getWriter(), issueDoc);
                 return null;
@@ -66,9 +76,9 @@ public class IssueScraperController extends AbstractCacheController {
         writer.write(doc);
     }
     
-    private Document getIssue(String project, String issueId) throws IOException, DocumentException {
+    private Document getIssue(String project, String issueId, boolean ignoreExternalSites) throws IOException, DocumentException {
         if (log.isDebugEnabled()) {
-            log.debug("Getting issue for project="+project+", issueId="+issueId);
+            log.debug("Getting issue for project="+project+", issueId="+issueId+", ignoreExternalSites="+ignoreExternalSites);
         }
         Document issueDoc = null;
         CacheUtility cacheUtility = getCacheUtility();
@@ -82,21 +92,27 @@ public class IssueScraperController extends AbstractCacheController {
                 if (log.isDebugEnabled()) {
                     log.debug("cache miss for issueId: " + issueId);
                 }
-                IIssue issue = issueTrackerManager.getIssue(project, issueId);
-                if (issue != null) {
-                    issueDoc = issue.toDocument();
-                    element = new Element(issueId, issue);
-                    cacheWrapper.put(element);
-                    element = new Element(issue.getIssueUrl(), issue);
-                    cacheWrapper.put(element);
-                    cacheUtility.storePreviousVersion(issueId, issueDoc);
+                if (!ignoreExternalSites) {
+                    IIssue issue = issueTrackerManager.getIssue(project, issueId);
+                    if (issue != null) {
+                        issueDoc = issue.toDocument();
+                        element = new Element(issueId, issue);
+                        cacheWrapper.put(element);
+                        element = new Element(issue.getIssueUrl(), issue);
+                        cacheWrapper.put(element);
+                        cacheUtility.storePreviousVersion(issueId, issueDoc);
+                        if (log.isDebugEnabled()) {
+                            if (cacheWrapper.get(issueId) == null) {
+                                log.debug("element not cached for key: " + issueId);
+                            }
+                            if (cacheWrapper.get(issue.getIssueUrl()) == null) {
+                                log.debug("element not cached for key: " + issue.getIssueUrl());
+                            }
+                        }
+                    }
+                } else {
                     if (log.isDebugEnabled()) {
-                        if (cacheWrapper.get(issueId) == null) {
-                            log.debug("element not cached for key: " + issueId);
-                        }
-                        if (cacheWrapper.get(issue.getIssueUrl()) == null) {
-                            log.debug("element not cached for key: " + issue.getIssueUrl());
-                        }
+                        log.debug("skipping external site for key: " + issueId);
                     }
                 }
             } else {
@@ -125,9 +141,9 @@ public class IssueScraperController extends AbstractCacheController {
         
     }
     
-    private Document getIssue(String url) {
+    private Document getIssue(String url, boolean ignoreExternalSites) {
         if (log.isDebugEnabled()) {
-            log.debug("Getting issue for url="+url);
+            log.debug("Getting issue for url="+url+", ignoreExternalSites="+ignoreExternalSites);
         }
         Document issueDoc = null;
         CacheUtility cacheUtility = getCacheUtility();
@@ -140,21 +156,27 @@ public class IssueScraperController extends AbstractCacheController {
                 if (log.isDebugEnabled()) {
                     log.debug("cache miss for url: " + url);
                 }
-                IIssue issue = issueTrackerManager.getIssue(url);
-                if (issue != null) {
-                    issueDoc = issue.toDocument();
-                    element = new Element(url, issue);
-                    cacheWrapper.put(element);
-                    element = new Element(issue.getId(), issue);
-                    cacheWrapper.put(element);
-                    cacheUtility.storePreviousVersion(url, issueDoc);
+                if (!ignoreExternalSites) {
+                    IIssue issue = issueTrackerManager.getIssue(url);
+                    if (issue != null) {
+                        issueDoc = issue.toDocument();
+                        element = new Element(url, issue);
+                        cacheWrapper.put(element);
+                        element = new Element(issue.getId(), issue);
+                        cacheWrapper.put(element);
+                        cacheUtility.storePreviousVersion(url, issueDoc);
+                        if (log.isDebugEnabled()) {
+                            if (cacheWrapper.get(url) == null) {
+                                log.debug("element not cached for key: " + url);
+                            }
+                            if (cacheWrapper.get(issue.getId()) == null) {
+                                log.debug("element not cached for key: " + issue.getId());
+                            }
+                        }
+                    }
+                } else {
                     if (log.isDebugEnabled()) {
-                        if (cacheWrapper.get(url) == null) {
-                            log.debug("element not cached for key: " + url);
-                        }
-                        if (cacheWrapper.get(issue.getId()) == null) {
-                            log.debug("element not cached for key: " + issue.getId());
-                        }
+                        log.debug("skipping external site for key: " + url);
                     }
                 }
             } else {
@@ -188,6 +210,14 @@ public class IssueScraperController extends AbstractCacheController {
 
     public void setIssueTrackerManager(IIssueTrackerManager issueTrackerManager) {
         this.issueTrackerManager = issueTrackerManager;
+    }
+
+    public Map<String, String> getConfiguration() {
+        return configuration;
+    }
+
+    public void setConfiguration(Map<String, String> configuration) {
+        this.configuration = configuration;
     }
     
 }
