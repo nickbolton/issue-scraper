@@ -24,9 +24,16 @@
         <property name="cacheWrapper"><ref bean="cacheWrapper"/></property>
     </bean>
 
+    <bean id="settingsConfiguration" class="java.util.HashMap"/>
+
     <bean id="IssueScraperController" class="net.unicon.issueScraper.controller.IssueScraperController">
         <property name="cacheUtility"><ref bean="cacheUtility"/></property>
         <property name="issueTrackerManager"><ref bean="issueTrackerManager"/></property>
+        <property name="configuration"><ref bean="settingsConfiguration"/></property>
+    </bean>
+
+    <bean id="ToggleIgnoreExternalSitesController" class="net.unicon.issueScraper.controller.ToggleIgnoreExternalSitesController">
+        <property name="configuration"><ref bean="settingsConfiguration"/></property>
     </bean>
 
     <bean id="ResetCacheController" class="net.unicon.issueScraper.controller.ResetCacheController">
@@ -43,10 +50,16 @@
                 <prop key="/issue*">IssueScraperController</prop>
                 <prop key="/reset*">ResetCacheController</prop>
                 <prop key="/stats*">CacheStatisticsController</prop>
+                <prop key="/toggleIgnoreExternalSites*">ToggleIgnoreExternalSitesController</prop>
             </props>
         </property>
     </bean>
 
+    <bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="viewClass"><value>org.springframework.web.servlet.view.JstlView</value></property>
+        <property name="prefix"><value>/WEB-INF/jsp/</value></property>
+        <property name="suffix"><value>.jsp</value></property>
+    </bean>
 
 <!--
     Properties for DefaultProjectIssueScraper beans:

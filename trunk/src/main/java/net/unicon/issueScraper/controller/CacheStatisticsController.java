@@ -12,7 +12,7 @@ public class CacheStatisticsController extends AbstractCacheController {
     
     public ModelAndView handleRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        return new ModelAndView("WEB-INF/jsp/cache_stats.jsp");
+        return new ModelAndView("cache_stats");
     }
 
 }

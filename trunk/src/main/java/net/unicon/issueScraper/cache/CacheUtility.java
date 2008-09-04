@@ -36,6 +36,7 @@ public class CacheUtility implements InitializingBean {
     public void storePreviousVersion(String key, Document content) throws IOException {
         XMLWriter writer = null;
         try {
+            key = key.toUpperCase();
             File file = getFile(key);
             
             if (log.isDebugEnabled()) {
@@ -85,6 +86,7 @@ public class CacheUtility implements InitializingBean {
     public Document getPreviousVersion(String key) throws DocumentException {
         File file = null;
         try {
+            key = key.toUpperCase();
             file = getFile(key);
             if (!file.exists()) {
                 if (log.isDebugEnabled()) {

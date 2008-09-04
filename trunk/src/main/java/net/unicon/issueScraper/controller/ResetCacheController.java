@@ -18,7 +18,7 @@ public class ResetCacheController extends AbstractCacheController {
         CacheUtility cacheUtility = getCacheUtility();
         CacheWrapper cacheWrapper = cacheUtility.getCacheWrapper();
         cacheWrapper.removeAll();
-        return new ModelAndView("WEB-INF/jsp/reset_cache.jsp");
+        return new ModelAndView("reset_cache");
     }
 
 }
