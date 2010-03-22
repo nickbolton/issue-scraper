@@ -159,22 +159,28 @@ public class Issue implements IIssue {
         }
     }
 
+    private void addElement(Element el, String name, String value) {
+        if (value != null) {
+            el.addElement(name).setText(value);
+        }
+    }
+
     public Document toDocument() {
         Document document = DocumentHelper.createDocument();
         Element issue = document.addElement("issue");
-        issue.addElement("id").setText(id);
-        issue.addElement("project").setText(project);
-        issue.addElement("assignee").setText(assignee);
-        issue.addElement("environment").setText(environment);
-        issue.addElement("issueUrl").setText(issueUrl);
-        issue.addElement("priority").setText(priority);
-        issue.addElement("reporter").setText(reporter);
-        issue.addElement("resolution").setText(resolution);
-        issue.addElement("status").setText(status);
-        issue.addElement("type").setText(type);
-        issue.addElement("closed").setText(new Boolean(closed).toString());
-        issue.addElement("summary").setText(summary);
-        issue.addElement("description").setText(description);
+        addElement(issue, "id", id);
+        addElement(issue, "project", project);
+        addElement(issue, "assignee", assignee);
+        addElement(issue, "environment", environment);
+        addElement(issue, "issueUrl", issueUrl);
+        addElement(issue, "priority", priority);
+        addElement(issue, "reporter", reporter);
+        addElement(issue, "resolution", resolution);
+        addElement(issue, "status", status);
+        addElement(issue, "type", type);
+        addElement(issue, "closed", new Boolean(closed).toString());
+        addElement(issue, "summary", summary);
+        addElement(issue, "description", description);
         return document;
     }
     
