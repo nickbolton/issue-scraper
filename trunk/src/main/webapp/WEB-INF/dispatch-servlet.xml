@@ -20,7 +20,7 @@
     </bean>
 
     <bean id="cacheUtility" class="net.unicon.issueScraper.cache.CacheUtility">
-        <property name="persistentFileCachePath"><value>/tmp</value></property>
+        <property name="persistentFileCachePath"><value>/opt/issueScraper/cache/previous</value></property>
         <property name="cacheWrapper"><ref bean="cacheWrapper"/></property>
     </bean>
 
@@ -60,7 +60,6 @@
         <property name="prefix"><value>/WEB-INF/jsp/</value></property>
         <property name="suffix"><value>.jsp</value></property>
     </bean>
-
 
 <!--
     Properties for DefaultProjectIssueScraper beans:
@@ -161,6 +160,14 @@
 				<entry key="Groups and Permissions"><ref bean="gapIssuesScraper"/></entry>
 				<entry key="Web Proxy Portlet"><ref bean="wppIssuesScraper"/></entry>
 				<entry key="OPS"><ref bean="opsIssuesScraper"/></entry>
+                                <entry key="CAS"><ref bean="casServerIssuesScraper"/></entry>
+                                <entry key="CAS Client"><ref bean="casClientIssuesScraper"/></entry>
+                                <entry key="PHP CAS Client"><ref bean="phpCasClientIssuesScraper"/></entry>
+				<entry key="CAS ClearPass Extension"><ref bean="cpeIssuesScraper"/></entry>
+				<entry key="Shibboleth"><ref bean="shibIssuesScraper"/></entry>
+				<entry key="Shibboleth Discovery"><ref bean="shibDiscoveryIssuesScraper"/></entry>
+				<entry key="Shibboleth Identity Provider"><ref bean="shibIdPIssuesScraper"/></entry>
+				<entry key="Shibboleth Service Provider"><ref bean="shibSPIssuesScraper"/></entry>
 			</map>
 		</property>
 	</bean>
@@ -168,14 +175,13 @@
 	<bean id="abstractIssueScraper"
           class="net.unicon.issueScraper.DefaultProjectIssueScraper"
           abstract="true">
-        <property name="issueUrlExpression"><value>http://www.ja-sig.org/issues/browse/.*</value></property>
     	<property name="issueIdToken"><value>%ISSUE_ID%</value></property>
     	<!--property name="proxyToken"><value>%URL%</value></property>
     	<property name="proxy"><value>http://localhost:8085/webcache/cache?url=%URL%</value></property-->
-    	<property name="issueLookupUrl"><value>http://www.ja-sig.org/issues/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
+	<property name="issueUrlExpression"><value>https://issues.jasig.org/browse/.*</value></property>
+	<property name="issueLookupUrl"><value>https://issues.jasig.org/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
     	<property name="startWorker"><value>false</value></property>
         <property name="refreshPeriod"><value>300</value></property>
-        <property name="connectionTimeout"><value>10000</value></property>
         <property name="issueParser"><ref bean="jiraIssueParser"/></property>
         <property name="queryParser"><ref bean="jiraIssueParser"/></property>
         <property name="issueCache">
@@ -194,7 +200,96 @@
         </property>
     </bean>
     
-	<bean id="uPortalIssuesScraper"
+    <bean id="opsIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          parent="abstractIssueScraper">
+        <property name="project"><value>Sakai</value></property>
+        <property name="issueUrlExpression"><value>https://jira.unicon.net/jira/browse/.*</value></property>
+        <property name="issueIdExpression"><value>.*(OP-[0-9]+)</value></property>
+    	<property name="issueIdToken"><value>%ISSUE_ID%</value></property>
+    	<property name="issueLookupUrl"><value>https://jira.unicon.net/jira/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
+        <property name="authenticationForm">
+            <bean class="net.unicon.issueScraper.DefaultAuthenticationForm">
+                <property name="method" value="GET"/>
+                <property name="parameters">
+                    <map>
+                        <entry key="os_username" value="opswww"/>
+                        <entry key="os_password" value="ch377y"/>
+                    </map>
+                </property>
+            </bean>
+        </property>
+    </bean>
+
+    <bean id="casServerIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          parent="abstractIssueScraper">
+        <property name="project"><value>CAS</value></property>
+        <property name="issueIdExpression"><value>.*(CAS-[0-9]+)</value></property>
+    </bean>
+
+    <bean id="casClientIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          parent="abstractIssueScraper">
+        <property name="project"><value>CAS Client</value></property>
+        <property name="issueIdExpression"><value>.*(CASC-[0-9]+)</value></property>
+    </bean>
+
+    <bean id="phpCasClientIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          parent="abstractIssueScraper">
+        <property name="project"><value>PHP CAS Client</value></property>
+        <property name="issueIdExpression"><value>.*(PHPCAS-[0-9]+)</value></property>
+    </bean>
+
+    <bean id="cpeIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          parent="abstractIssueScraper">
+        <property name="project"><value>CAS ClearPass Extension</value></property>
+        <property name="issueIdExpression"><value>.*(CPE-[0-9]+)</value></property>
+    </bean>
+    
+    <bean id="shibIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          parent="abstractIssueScraper">
+        <property name="project"><value>Shibboleth</value></property>
+	<property name="issueUrlExpression"><value>https://bugs.internet2.edu/jira/browse/.*</value></property>
+        <property name="issueIdExpression"><value>.*(SC-[0-9]+)</value></property>
+	<property name="issueIdToken"><value>%ISSUE_ID%</value></property>
+        <property name="issueLookupUrl"><value>https://bugs.internet2.edu/jira/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
+    </bean>
+
+    <bean id="shibDiscoveryIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          parent="abstractIssueScraper">
+        <property name="project"><value>Shibboleth Discovery</value></property>
+        <property name="issueUrlExpression"><value>https://bugs.internet2.edu/jira/browse/.*</value></property>
+        <property name="issueIdExpression"><value>.*(SDSJ-[0-9]+)</value></property>
+        <property name="issueIdToken"><value>%ISSUE_ID%</value></property>
+        <property name="issueLookupUrl"><value>https://bugs.internet2.edu/jira/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
+    </bean>
+
+    <bean id="shibIdPIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          parent="abstractIssueScraper">
+        <property name="project"><value>Shibboleth Identity Provider</value></property>
+        <property name="issueUrlExpression"><value>https://bugs.internet2.edu/jira/browse/.*</value></property>
+        <property name="issueIdExpression"><value>.*(SIDPO-[0-9]+)</value></property>
+        <property name="issueIdToken"><value>%ISSUE_ID%</value></property>
+        <property name="issueLookupUrl"><value>https://bugs.internet2.edu/jira/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
+    </bean>
+
+    <bean id="shibSPIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          parent="abstractIssueScraper">
+        <property name="project"><value>Shibboleth Service Provider</value></property>
+        <property name="issueUrlExpression"><value>https://bugs.internet2.edu/jira/browse/.*</value></property>
+        <property name="issueIdExpression"><value>.*(SSPCPP-[0-9]+)</value></property>
+        <property name="issueIdToken"><value>%ISSUE_ID%</value></property>
+        <property name="issueLookupUrl"><value>https://bugs.internet2.edu/jira/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
+    </bean>
+
+    <bean id="uPortalIssuesScraper"
           class="net.unicon.issueScraper.DefaultProjectIssueScraper"
           parent="abstractIssueScraper">
         <property name="project"><value>uPortal</value></property>
@@ -228,35 +323,14 @@
         <property name="project"><value>Bookmarks Portlet</value></property>
         <property name="issueIdExpression"><value>.*(PBOOK-[0-9]+)</value></property>
     </bean>
-    <bean id="opsIssuesScraper"
-          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
-          parent="abstractIssueScraper">
-        <property name="project"><value>OPS</value></property>
-        <property name="issueUrlExpression"><value>https://jira.unicon.net/jira/browse/.*</value></property>
-        <property name="issueIdExpression"><value>.*(SAK-[0-9]+)</value></property>
-    	<property name="issueIdToken"><value>%ISSUE_ID%</value></property>
-    	<property name="issueLookupUrl"><value>https://jira.unicon.net/jira/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
-        <property name="authenticationForm">
-            <bean class="net.unicon.issueScraper.DefaultAuthenticationForm">
-                <property name="method" value="GET"/>
-                <property name="parameters">
-                    <map>
-                        <entry key="os_username" value="nbolton"/>
-                        <entry key="os_password" value="uqopklm1"/>
-                    </map>
-                </property>
-            </bean>
-        </property>
-    </bean>
-    
     <bean id="sakaiIssuesScraper"
           class="net.unicon.issueScraper.DefaultProjectIssueScraper"
           parent="abstractIssueScraper">
         <property name="project"><value>Sakai</value></property>
-        <property name="issueUrlExpression"><value>http://bugs.sakaiproject.org/jira/browse/.*</value></property>
+        <property name="issueUrlExpression"><value>http://jira.sakaiproject.org/browse/.*</value></property>
         <property name="issueIdExpression"><value>.*(SAK-[0-9]+)</value></property>
     	<property name="issueIdToken"><value>%ISSUE_ID%</value></property>
-    	<property name="issueLookupUrl"><value>http://bugs.sakaiproject.org/jira/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
+    	<property name="issueLookupUrl"><value>http://jira.sakaiproject.org/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
     </bean>
     
     <bean id="toroChannelsIssuesScraper"
