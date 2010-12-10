@@ -164,6 +164,8 @@
                                 <entry key="CAS Client"><ref bean="casClientIssuesScraper"/></entry>
                                 <entry key="PHP CAS Client"><ref bean="phpCasClientIssuesScraper"/></entry>
 				<entry key="CAS ClearPass Extension"><ref bean="cpeIssuesScraper"/></entry>
+				<entry key="CAS Documentation"><ref bean="caswIssuesScraper"/></entry>
+				<entry key="Apache CAS Module"><ref bean="masIssuesScraper"/></entry>
 				<entry key="Shibboleth"><ref bean="shibIssuesScraper"/></entry>
 				<entry key="Shibboleth Discovery"><ref bean="shibDiscoveryIssuesScraper"/></entry>
 				<entry key="Shibboleth Identity Provider"><ref bean="shibIdPIssuesScraper"/></entry>
@@ -249,6 +251,20 @@
         <property name="issueIdExpression"><value>.*(CPE-[0-9]+)</value></property>
     </bean>
     
+    <bean id="caswIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          parent="abstractIssueScraper">
+        <property name="project"><value>CAS Documentation</value></property>
+        <property name="issueIdExpression"><value>.*(CASW-[0-9]+)</value></property>
+    </bean>
+
+    <bean id="masIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          parent="abstractIssueScraper">
+        <property name="project"><value>Apache CAS Module</value></property>
+        <property name="issueIdExpression"><value>.*(MAS-[0-9]+)</value></property>
+    </bean>
+
     <bean id="shibIssuesScraper"
           class="net.unicon.issueScraper.DefaultProjectIssueScraper"
           parent="abstractIssueScraper">
