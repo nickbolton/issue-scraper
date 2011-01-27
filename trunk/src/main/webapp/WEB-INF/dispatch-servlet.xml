@@ -343,10 +343,10 @@
           class="net.unicon.issueScraper.DefaultProjectIssueScraper"
           parent="abstractIssueScraper">
         <property name="project"><value>Sakai</value></property>
-        <property name="issueUrlExpression"><value>http://jira.sakaiproject.org/browse/.*</value></property>
+        <property name="issueUrlExpression"><value>https://jira.sakaiproject.org/browse/.*</value></property>
         <property name="issueIdExpression"><value>.*(SAK-[0-9]+)</value></property>
     	<property name="issueIdToken"><value>%ISSUE_ID%</value></property>
-    	<property name="issueLookupUrl"><value>http://jira.sakaiproject.org/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
+    	<property name="issueLookupUrl"><value>https://jira.sakaiproject.org/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
     </bean>
     
     <bean id="toroChannelsIssuesScraper"
