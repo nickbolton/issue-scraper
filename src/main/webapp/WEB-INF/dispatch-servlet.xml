@@ -152,6 +152,8 @@
 			<map>
 				<entry key="uPortal"><ref bean="uPortalIssuesScraper"/></entry>
 				<entry key="Sakai"><ref bean="sakaiIssuesScraper"/></entry>
+				<entry key="Sakai Kernel"><ref bean="sakaiKernelIssuesScraper"/></entry>
+				<entry key="Sakai Kaltura Extension"><ref bean="skeIssuesScraper"/></entry>
 				<entry key="OpenToro"><ref bean="toroChannelsIssuesScraper"/></entry>
 				<entry key="USC Announcements"><ref bean="uscAnnouncementsIssuesScraper"/></entry>
 				<entry key="UBC Webmail"><ref bean="ubcWebmailIssuesScraper"/></entry>
@@ -339,6 +341,7 @@
         <property name="project"><value>Bookmarks Portlet</value></property>
         <property name="issueIdExpression"><value>.*(PBOOK-[0-9]+)</value></property>
     </bean>
+
     <bean id="sakaiIssuesScraper"
           class="net.unicon.issueScraper.DefaultProjectIssueScraper"
           parent="abstractIssueScraper">
@@ -349,6 +352,26 @@
     	<property name="issueLookupUrl"><value>https://jira.sakaiproject.org/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
     </bean>
     
+    <bean id="sakaiKernelIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          parent="abstractIssueScraper">
+        <property name="project"><value>Sakai Kernel</value></property>
+        <property name="issueUrlExpression"><value>https://jira.sakaiproject.org/browse/.*</value></property>
+        <property name="issueIdExpression"><value>.*(KNL-[0-9]+)</value></property>
+        <property name="issueIdToken"><value>%ISSUE_ID%</value></property>
+        <property name="issueLookupUrl"><value>https://jira.sakaiproject.org/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
+    </bean>
+
+    <bean id="skeIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          parent="abstractIssueScraper">
+        <property name="project"><value>Sakai Kaltura Extension</value></property>
+        <property name="issueUrlExpression"><value>https://jira.sakaiproject.org/browse/.*</value></property>
+        <property name="issueIdExpression"><value>.*(SKE-[0-9]+)</value></property>
+        <property name="issueIdToken"><value>%ISSUE_ID%</value></property>
+        <property name="issueLookupUrl"><value>https://jira.sakaiproject.org/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
+    </bean>
+
     <bean id="toroChannelsIssuesScraper"
           class="net.unicon.issueScraper.DefaultProjectIssueScraper"
           parent="abstractIssueScraper">
