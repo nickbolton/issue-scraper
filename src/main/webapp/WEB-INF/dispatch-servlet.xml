@@ -172,6 +172,7 @@
 				<entry key="Shibboleth Discovery"><ref bean="shibDiscoveryIssuesScraper"/></entry>
 				<entry key="Shibboleth Identity Provider"><ref bean="shibIdPIssuesScraper"/></entry>
 				<entry key="Shibboleth Service Provider"><ref bean="shibSPIssuesScraper"/></entry>
+				<entry key="Grouper"><ref bean="grouperIssuesScraper"/></entry>
 			</map>
 		</property>
 	</bean>
@@ -303,6 +304,16 @@
         <property name="project"><value>Shibboleth Service Provider</value></property>
         <property name="issueUrlExpression"><value>https://bugs.internet2.edu/jira/browse/.*</value></property>
         <property name="issueIdExpression"><value>.*(SSPCPP-[0-9]+)</value></property>
+        <property name="issueIdToken"><value>%ISSUE_ID%</value></property>
+        <property name="issueLookupUrl"><value>https://bugs.internet2.edu/jira/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
+    </bean>
+
+    <bean id="GrouperIssuesScraper"
+          class="net.unicon.issueScraper.DefaultProjectIssueScraper"
+          parent="abstractIssueScraper">
+        <property name="project"><value>Grouper</value></property>
+        <property name="issueUrlExpression"><value>https://bugs.internet2.edu/jira/browse/.*</value></property>
+        <property name="issueIdExpression"><value>.*(GRP-[0-9]+)</value></property>
         <property name="issueIdToken"><value>%ISSUE_ID%</value></property>
         <property name="issueLookupUrl"><value>https://bugs.internet2.edu/jira/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
     </bean>
