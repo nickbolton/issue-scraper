@@ -319,7 +319,7 @@
         <property name="issueLookupUrl"><value>https://bugs.internet2.edu/jira/si/jira.issueviews:issue-xml/%ISSUE_ID%/%ISSUE_ID%.xml</value></property>
     </bean>
 
-    <bean id="sspServerIssuesScraper"
+    <bean id="sspIssuesScraper"
           class="net.unicon.issueScraper.DefaultProjectIssueScraper"
           parent="abstractIssueScraper">
         <property name="project"><value>SSP</value></property>
