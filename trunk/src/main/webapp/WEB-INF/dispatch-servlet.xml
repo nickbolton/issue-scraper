@@ -173,7 +173,7 @@
 				<entry key="Shibboleth Identity Provider"><ref bean="shibIdPIssuesScraper"/></entry>
 				<entry key="Shibboleth Service Provider"><ref bean="shibSPIssuesScraper"/></entry>
 				<entry key="Grouper"><ref bean="grouperIssuesScraper"/></entry>
-				<entry key="Student Success Plan"><ref bean="sspIssuesScraper"/></entry>
+				<entry key="SSP"><ref bean="sspIssuesScraper"/></entry>
 			</map>
 		</property>
 	</bean>
